@@ -101,6 +101,7 @@ void Controller::DrawMainGr(LPDRAWITEMSTRUCT Item1) {
 
 	Pen BackGroundPen(Color::DarkGray, 0.005);
 	Pen pen(Color::BlueViolet, 0.006);
+	Pen pen2(Color::Green, 0.006);
 
 	Pen StickPen(Color::CornflowerBlue, 0.02);
 	SolidBrush brush(Color::Black);
@@ -124,6 +125,10 @@ void Controller::DrawMainGr(LPDRAWITEMSTRUCT Item1) {
 
 	//вертикальная
 	gr.DrawLine(&pen, PointF(0, top / 2), PointF(0, -top / 2));
+
+	//границы ямы
+	gr.DrawLine(&pen2, PointF(a, top / 2), PointF(a, -top / 2));
+	gr.DrawLine(&pen2, PointF(b, top / 2), PointF(b, -top / 2));
 
 	gr.ResetTransform();
 
@@ -400,6 +405,8 @@ void Controller::UpdateModel(
 	this->R = R;
 	this->N = n;
 	this->dt = dt;
+	this->a = a;
+	this->b = b;
 }
 
 //находит минимальное/максимальное значения функции
