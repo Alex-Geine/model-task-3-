@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <complex>
 #include <vector>
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -16,6 +17,9 @@ class WaveModel {
 private:
 	
 	int Id = 1;		//текущий айди времени
+	int N;		//количество точек по оси x
+	int IdMax = 1024;	//количество отсчетов по времени
+
 
 	double
 		t = 0,	//время нашей модели
@@ -30,29 +34,22 @@ private:
 		gamma;	//среднеквадратическое отклонение частицы, задающее меру неопределенности ее положения
 
 	//KOEF
-	double
-		*AReal,
-		*BReal,
-		*CReal,
-		*DReal,
-		*AImagin,
-		*BImagin,
-		*CImagin,
-		*DImagin;
+	complex<double>
+		*A = NULL,
+		*B = NULL,
+		*C = NULL,
+		*D = NULL;
 
+	complex<double>		
+		* alpha = NULL,	//значения коэффициентов альфа
+		* betta = NULL;	//значения коэффициентов бетта
 
 	//DATA
-	double		
-		* alphaReal,	//значения реальной части кожффициентов альфа
-		* alphaImagin,	//значения мнимой части кожффициентов альфа
-		* bettaReal,	//значения реальной части коэффициентов бетта
-		* bettaImagin;	//значения мнимой части коэффициентов бетта
-
-	
-
-	double** FFurReal;		//реальная часть спектра функции пакета
-	double** FFurImagin;	//мнимая часть спектра функции пакета
-
+	double* X = NULL;					//значения пространственной сетки
+	double* f = NULL;					//значения частотной сетки
+	complex<double>** F = NULL;			//функция пакета
+	complex<double>** FFur = NULL;		// спектр функции пакета
+	vector<pair<double, int>> Energes;	//собственные энергии
 
 	//начальная инициализация алгоритма
 	void InitData();
@@ -73,20 +70,49 @@ private:
 	void BackwardMethod();
 
 	//Быстрое Фурье
-	bool  FFT(int Ft_Flag, double* Rdat, double* Idat);
+	bool  FFT(int Ft_Flag, complex<double>* data);
 
 	//нахождение всех спектров
 	void FindSpectrum();
 
+	//нахождение производной от функции F
+	complex<double> DF(int id);
+
+	//конвертирует из complex в double
+	void ConvertComplex(complex<double>* comp, double** RDat, double** IDat);
+
+	//конвертирует из double в complex
+	void ConvertDouble(complex<double>** comp, double* RDat, double* IDat);
+
+	//находит пики в спектрограмме
+	void FindPicks();
+
+	//находит максимальное значение, начиная с некоторого id
+	void FindMax(int ida, int idb, double&max, int & id);
+
+	//находит максимальное значение, начиная с некоторого id
+	bool FindMax(int ida, int idb, double& max, int& id, double min);
+
+	//находит отрезок со следующим пиком
+	void FindId(double min, int& ida, int idb);
 public:
-	int N;		//количество точек по оси x
-	int IdMax = 1024;	//количество отсчетов по времени
+	//Отдает указатель на F()
+	complex<double>** GetF();
 
-	double
-		* X;	//значения пространственной сетки
+	//Отдает указатель на FFur()
+	complex<double>** GetFFur();
 
-	double** FReal;	//значения со значениями реальной части функции пакета
-	double** FImagin;	//значения со значениями реальной части функции пакета
+	//Отдает указатель на вектор с энергиями
+	vector<pair<double, int>> GetEnerges();
+
+	//сбрасывает настройки
+	void Reset();
+
+	//отдает указатель на X
+	double* GetX();
+
+	//отдает указатель на f
+	double* Getf();
 
 	//нахождение волнового пакета в следующий момент времени
 	void FindWave();
