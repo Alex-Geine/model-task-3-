@@ -130,6 +130,7 @@ void WaveModel::Update(int N, double dt, double R, double a, double b, double U0
 	this->f0 = f0;
 	this->aSr = asr;
 	this->gamma = gamma;
+	this->SFId = N / 2;
 }
 
 //Быстрое Фурье
@@ -267,7 +268,7 @@ void WaveModel::FindPicks() {
 	Energes.push_back({ max, id });
 
 	//находим остальные пики
-	double min = max * 0.25;
+	double min = max * 0.05;
 	int ida = id;
 	int idb = IdMax;
 	bool res = true;
@@ -283,12 +284,30 @@ void WaveModel::FindPicks() {
 
 }
 
+//вторая версия поиска пиков
+void WaveModel::FindPicks2() {
+	int id;
+	double max;
+	FindMax(0, IdMax, max, id);
+
+	max *= 0.05;
+	for (int i = 1; i < 1024; i++) {
+		double left = abs(FFur[SFId][i - 1]);
+		double cent = abs(FFur[SFId][i]);
+		double right = abs(FFur[SFId][i + 1]);
+
+		if ((cent > left) && (cent > right) && (cent>=max)) {
+			Energes.push_back({ cent, i});
+		}
+	}
+}
+
 //находит максимальное значение, начиная с некоторого id
 void WaveModel::FindMax(int ida, int idb, double& max, int& id) {
-	max = abs(FFur[int(N / 2)][ida]);
+	max = abs(FFur[SFId][ida]);
 	for (int i = ida + 1; i < idb; i++) {
-		if (max < abs(FFur[int(N / 2)][i])) {
-			max = abs(FFur[int(N / 2)][i]);
+		if (max < abs(FFur[SFId][i])) {
+			max = abs(FFur[SFId][i]);
 			id = i;
 		}
 	}
@@ -320,7 +339,7 @@ void WaveModel::FindId(double min, int& ida, int idb) {
 void WaveModel::FindFunc() {
 	//находим спектр
 	FindSpectrum();
-	FindPicks();
+	FindPicks2();
 }
 
 //Отдает указатель на F(id)
@@ -386,4 +405,11 @@ void WaveModel::ConvertDouble(complex<double>** comp, double* RDat, double* IDat
 //Отдает ссылку на вектор с энергиями
 vector<pair<double, int>> WaveModel::GetEnerges(){
 	return Energes;
+}
+
+//находит собственные функции в конкретном 
+void WaveModel::FindSF(int id) {
+	Energes.clear();
+	SFId = id;
+	FindPicks2();
 }

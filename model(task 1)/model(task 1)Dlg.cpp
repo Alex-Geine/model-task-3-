@@ -102,6 +102,7 @@ BEGIN_MESSAGE_MAP(Cmodeltask1Dlg, CDialogEx)
 	ON_EN_CHANGE(IDC_EDIT4, &Cmodeltask1Dlg::OnEnChangeEdit4)
 	ON_BN_CLICKED(IDC_BUTTON5, &Cmodeltask1Dlg::OnBnClickedButton5)
 	ON_BN_CLICKED(IDC_BUTTON6, &Cmodeltask1Dlg::OnBnClickedButton6)
+	ON_BN_CLICKED(IDC_BUTTON7, &Cmodeltask1Dlg::OnBnClickedButton7)
 END_MESSAGE_MAP()
 
 
@@ -339,4 +340,11 @@ void Cmodeltask1Dlg::OnBnClickedButton6()
 
 	control->drawIdF = idDraw;
 	phd->GetMes();
+}
+
+//пересчитать собственные функции
+void Cmodeltask1Dlg::OnBnClickedButton7()
+{
+	UpdateData();
+	control->GetSF(idDraw);
 }

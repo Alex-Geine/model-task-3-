@@ -19,6 +19,7 @@ private:
 	int Id = 1;		//текущий айди времени
 	int N;		//количество точек по оси x
 	int IdMax = 1024;	//количество отсчетов по времени
+	int SFId;
 
 
 	double
@@ -87,6 +88,9 @@ private:
 	//находит пики в спектрограмме
 	void FindPicks();
 
+	//вторая версия поиска пиков
+	void FindPicks2();
+
 	//находит максимальное значение, начиная с некоторого id
 	void FindMax(int ida, int idb, double&max, int & id);
 
@@ -122,4 +126,7 @@ public:
 
 	//апдейтит параметры модели
 	void Update(int N, double dt, double R, double a, double b, double U0, double f0, double asr, double gamma);
+
+	//находит собственные функции в конкретном 
+	void FindSF(int id);
 };

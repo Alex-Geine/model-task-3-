@@ -454,3 +454,15 @@ bool Controller::DataReady() {
 	else
 		return false;
 }
+
+//считает собственные функции по другому отсчеты координаты
+void Controller::GetSF(int id) {
+	Energes.clear();
+	ClearList();
+
+	//обращаемся к модели
+	mod->FindSF(id);
+	Energes = mod->GetEnerges();
+
+	FillList();
+}
