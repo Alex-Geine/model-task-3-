@@ -57,7 +57,7 @@ Cmodeltask1Dlg::Cmodeltask1Dlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_MODELTASK_1_DIALOG, pParent)
 
 	, n(100)
-	, dt(1e-16)
+	, dt(0.004)
 	, a(-1)
 	, b(1)
 	, R(2)
@@ -81,8 +81,8 @@ void Cmodeltask1Dlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT3, a);
 	DDX_Text(pDX, IDC_EDIT4, b);
 	DDX_Text(pDX, IDC_EDIT5, R);
-	DDX_Text(pDX, IDC_EDIT6, f0);
-	DDX_Text(pDX, IDC_EDIT7, U0);
+	DDX_Text(pDX, IDC_EDIT6, U0);
+	DDX_Text(pDX, IDC_EDIT7, f0);
 	DDX_Text(pDX, IDC_EDIT8, gamma);
 	DDX_Control(pDX, IDC_LIST2, listModels);
 	DDX_Text(pDX, IDC_EDIT9, asr);
@@ -93,16 +93,16 @@ BEGIN_MESSAGE_MAP(Cmodeltask1Dlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
-//	ON_BN_CLICKED(IDOK, &Cmodeltask1Dlg::OnBnClickedOk)
-	//ON_EN_CHANGE(IDC_EDIT2, &Cmodeltask1Dlg::OnEnChangeEdit2)
 	ON_WM_TIMER()
-//	ON_BN_CLICKED(IDCANCEL, &Cmodeltask1Dlg::OnBnClickedCancel)
+
 	ON_BN_CLICKED(IDC_BUTTON1, &Cmodeltask1Dlg::OnBnClickedButton1)
 	ON_BN_CLICKED(IDC_BUTTON2, &Cmodeltask1Dlg::OnBnClickedButton2)
 	ON_BN_CLICKED(IDC_BUTTON3, &Cmodeltask1Dlg::OnBnClickedButton3)
 	ON_BN_CLICKED(IDC_BUTTON4, &Cmodeltask1Dlg::OnBnClickedButton4)	
 	ON_EN_CHANGE(IDC_EDIT4, &Cmodeltask1Dlg::OnEnChangeEdit4)
 	ON_BN_CLICKED(IDC_BUTTON5, &Cmodeltask1Dlg::OnBnClickedButton5)
+	ON_BN_CLICKED(IDC_BUTTON6, &Cmodeltask1Dlg::OnBnClickedButton6)
+	ON_BN_CLICKED(IDC_BUTTON7, &Cmodeltask1Dlg::OnBnClickedButton7)
 END_MESSAGE_MAP()
 
 
@@ -157,9 +157,9 @@ BOOL Cmodeltask1Dlg::OnInitDialog()
 
 	
 
-	control->listModels = &listModels;
-
-	//timer = SetTimer(1, 10, 0);
+	control->listEnerges = &listModels;
+	
+	
 	
 	return TRUE;  // возврат значения TRUE, если фокус не передан элементу управления
 }
@@ -213,126 +213,138 @@ HCURSOR Cmodeltask1Dlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-
-
-//void Cmodeltask1Dlg::OnBnClickedOk()
-//{	
-//	
-//	
-//	
-//	
-//}
-
-
 void Cmodeltask1Dlg::OnEnChangeEdit2()
 {
-	// TODO:  Если это элемент управления RICHEDIT, то элемент управления не будет
-	// send this notification unless you override the CDialogEx::OnInitDialog()
-	// функция и вызов CRichEditCtrl().SetEventMask()
-	// with the ENM_CHANGE flag ORed into the mask.
-
-	// TODO:  Добавьте код элемента управления
 }
 
 
 void Cmodeltask1Dlg::OnTimer(UINT_PTR nIDEvent)
 {
-	// TODO: добавьте свой код обработчика сообщений или вызов стандартного
-	//control->Draw();
+	if (ID < 1024) {	
+		control->drawId = ID;
+		MainGraph.draw = 1;
+		MainGraph.Invalidate(false);
 
-	
-	MainGraph.Invalidate(false);
-
-	while (PeekMessage(&msg, 0, WM_PAINT, WM_PAINT, PM_REMOVE))
-	{
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
+		while (PeekMessage(&msg, 0, WM_PAINT, WM_PAINT, PM_REMOVE))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+		ID++;
 	}
-
-	
-	//phd->GetMes();
-	//por->GetMes();	
-	
-	//MessageBoxA(NULL, "D", "a", NULL);
+	else {
+		KillTimer(timer);
+	}
 
 	CDialogEx::OnTimer(nIDEvent);
 }
-
-
-//void Cmodeltask1Dlg::OnBnClickedCancel()
-//{
-	// TODO: добавьте свой код обработчика уведомлений
-	//CDialogEx::OnCancel();
-//	CDialog::CloseWindow();
-//	exit(0);
-//}
 
 //фазовая траектория
 void Cmodeltask1Dlg::OnBnClickedButton1()
 {	
 	phd->ShowWindow(1);
-
-	//phd.DoModal();
-	// TODO: добавьте свой код обработчика уведомлений
 }
 
 
 void CAboutDlg::OnPaint()
 {
 	CPaintDC dc(this); // device context for painting
-	// TODO: добавьте свой код обработчика сообщений
-	// Не вызывать CDialogEx::OnPaint() для сообщений рисования
 }
 
 //фазовый портрет
 void Cmodeltask1Dlg::OnBnClickedButton2()
 {
-	por->ShowWindow(1);
-	// TODO: добавьте свой код обработчика уведомлений
+	por->ShowWindow(1);	
 }
 
 //маятники
 void Cmodeltask1Dlg::OnBnClickedButton3()
 {
-
-	// TODO: добавьте свой код обработчика уведомлений
+	if (!control->DataReady()) {
+		MessageBox(L"Нет данных!", L"Ошибка!", NULL);
+		return;
+	}
 	control->ShowItemList();
-	//menu->ShowWindow(1);
-	// TODO: добавьте свой код обработчика уведомлений
+	por->GetMes();
 }
 
 //Посчитать значения
 void Cmodeltask1Dlg::OnBnClickedButton4()
 {
 	UpdateData();
+
+	//проверки на корректность значений
+	if ((abs(a) > R) || (abs(b) > R)) {
+		MessageBox(L"границы ямы больше чем R", L"Ошибка!", NULL);
+		return;
+	}
+	else if (a >= b) {
+		MessageBox(L"Левая граница ямы больше, чем правая!", L"Ошибка!", NULL);
+		return;
+	}
+	
 	control->Clear();
 	control->UpdateModel(n, dt, a, b, R, f0, U0, gamma, asr);
-	control->StartSolve();	
+
+	
+
+	control->StartSolve();
+
+	
+
+	control->GetData();
 }
-
-
 
 void Cmodeltask1Dlg::OnEnChangeEdit4()
 {
-	// TODO:  Если это элемент управления RICHEDIT, то элемент управления не будет
-	// send this notification unless you override the CDialogEx::OnInitDialog()
-	// функция и вызов CRichEditCtrl().SetEventMask()
-	// with the ENM_CHANGE flag ORed into the mask.
-
-	// TODO:  Добавьте код элемента управления
 }
 
 //нарисовать
 void Cmodeltask1Dlg::OnBnClickedButton5()
 {
-	UpdateData();
-	control->drawId = idDraw;
-	MainGraph.draw = 1;
-	MainGraph.Invalidate(false);
-
-	while (PeekMessage(&msg, 0, WM_PAINT, WM_PAINT, PM_REMOVE))
-	{
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
+	if (!control->DataReady()) {
+		MessageBox(L"Нет данных!", L"Ошибка!", NULL);
+		return;
 	}
+	ID = 0;
+	timer = SetTimer(1, 10, 0);
+
+	/*for (int i = 0; i < 1024; i++) {
+		control->drawId = i;		
+		MainGraph.draw = 1;
+		MainGraph.Invalidate(false);
+
+		while (PeekMessage(&msg, 0, WM_PAINT, WM_PAINT, PM_REMOVE))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+	}*/
+	
+}
+
+//нарисовать спектр
+void Cmodeltask1Dlg::OnBnClickedButton6()
+{
+	if (!control->DataReady()) {
+		MessageBox(L"Нет данных!", L"Ошибка!", NULL);
+		return;
+	}
+	
+	UpdateData();
+
+	if ((idDraw < 0) || (idDraw >= n)) {
+		MessageBox(L"Id вышло за предел количества точек по X", L"Ошибка!", NULL);
+		return;
+	}
+
+	control->drawIdF = idDraw;
+	phd->GetMes();
+}
+
+//пересчитать собственные функции
+void Cmodeltask1Dlg::OnBnClickedButton7()
+{
+	UpdateData();
+	control->GetSF(idDraw);
 }
