@@ -20,24 +20,19 @@ void WaveModel::InitData() {
 
 	//создание массивов
 	X = new double[N];
-	FReal = new double* [IdMax];
-	FImagin = new double* [IdMax];
-	FFurReal = new double* [N];
-	FFurImagin = new double* [N];
+	f = new double[IdMax];
+	F = new complex<double>* [IdMax];	
+	FFur = new complex<double>* [N];
+	
 
-	AReal = new double[N - 1];
-	AImagin = new double[N - 1];
-	BReal = new double[N - 1];
-	BImagin = new double[N - 1];
-	CReal = new double[N - 1];
-	CImagin = new double[N - 1];
-	DReal = new double[N - 1];
-	DImagin = new double[N - 1];
+	A = new complex<double>[N - 1];	
+	B = new complex<double>[N - 1];	
+	C = new complex<double>[N - 1];	
+	D = new complex<double>[N - 1];
+	
 
-	alphaReal = new double[N - 1];
-	bettaReal = new double[N - 1];
-	alphaImagin = new double[N - 1];
-	bettaImagin = new double[N - 1];
+	alpha = new complex<double>[N - 1];
+	betta = new complex<double>[N - 1];	
 
 
 	//инициализация простраственной стеки
@@ -47,27 +42,31 @@ void WaveModel::InitData() {
 	for (int i = 0; i < N; i++) 
 		X[i] = x0 + i * stepX;
 
-	alphaReal[0] = 0;
-	bettaReal[0] = 0;
-	alphaImagin[0] = 0;
-	bettaImagin[0] = 0;
-	
+	//инициализация частотной сетки
+	double stepF = 1 / (dt * IdMax);
+
+	for (int i = 0; i < IdMax; i++)
+		f[i] = i * stepF;
+
+	complex<double> buf(0., 0.);
+	alpha[0] = buf;
+	betta[0] = buf;	
 
 	//отсчеты пакета
 	for (int i = 0; i < IdMax; i++) {
-		FReal[i] = new double[N];
-		FImagin[i] = new double[N];
+		F[i] = new complex<double>[N];
+
 		for (int j = 0; j < N; j++) {
 			//волновой пакет в начальный момент времени
 			if (i == 0) {
-				FReal[i][j] = F0(X[j]);
-				FImagin[i][j] = 0;
+				complex<double> buf(F0(X[j]), 0.);
+				F[i][j] = buf;				
 			}
 
 			//во все остальные моменты времени
 			else {
-				FReal[i][j] = 0;
-				FImagin[i][j] = 0;
+				complex<double> buf(0., 0.);
+				F[i][j] = buf;
 			}
 		}
 	}
@@ -89,28 +88,47 @@ double WaveModel::U(double x) {
 		return U0;
 }
 
+//нахождение производной от функции F
+complex<double> WaveModel::DF(int id) {
+	return (2. / (X[id + 1] - X[id - 1]) * ((F[Id - 1][id + 1] - F[Id - 1][id]) / (X[id + 1] - X[id]) - (F[Id - 1][id] - F[Id - 1][id - 1]) / (X[id] - X[id - 1])));
+}
+
 //нахождение коэффициентов ABCD
 void WaveModel::FindABCD() {
-	for (int i = 1; i < N; i++) {
-		AReal[i - 1] = 0;
-		AImagin[i - 1] = -0.5 * dt / ((X[i + 1] - X[i - 1]) * (X[i] - X[i - 1]));
+	
+	//A[i - 1] = complex<double>(0., -dt / ((X[i + 1] - X[i - 1]) * (X[i] - X[i - 1])));
+	//B[i - 1] = complex<double>(0., -dt / ((X[i + 1] - X[i - 1]) * (X[i + 1] - X[i])));
+	//C[i - 1] = complex<double>(1., dt * U(X[i]) / 2 + dt / (X[i + 1] - X[i - 1]) * ((1 / (X[i + 1] - X[i])) + (1 / (X[i] - X[i - 1]))));
+	//D[i - 1] = F[Id - 1][i] + complex<double>(0., dt / 2.) * (DF(i) - U(X[i]) * F[Id - 1][i]);
 
-		BReal[i - 1] = 0;
-		BImagin[i - 1] = -0.5 * dt / ((X[i + 1] - X[i - 1]) * (X[i + 1] - X[i]));
+	//complex<double> tau = { 0, dt };
+	//A[i - 1] = tau * FOpen(X[i]) * DFOpen(X[i]) / (2 * (X[i + 1] - X[i - 1])) - tau * FOpen(X[i]) * FOpen(X[i]) / ((X[i + 1] - X[i - 1]) * (X[i] - X[i - 1]));
+	//B[i - 1] = -tau * FOpen(X[i]) * DFOpen(X[i]) / (2 * (X[i + 1] - X[i - 1])) - tau * FOpen(X[i]) * FOpen(X[i]) / ((X[i + 1] - X[i - 1]) * (X[i + 1] - X[i]));
+	//C[i - 1] = 1. + tau * U(X[i]) / 2. + tau * FOpen(X[i]) * FOpen(X[i]) / (X[i + 1] - X[i - 1]) * ((1. / (X[i + 1] - X[i])) + (1. / (X[i] - X[i - 1])));
+	//D[i - 1] =
+	//	F[Id - 1][i] +
+	//	tau * U(X[i]) / 2. * F[Id - 1][i] +
+	//	tau * FOpen(X[i]) * DFOpen(X[i]) / (2 * (X[i + 1] - X[i - 1])) * F[Id - 1][i + 1] -
+	//	tau * FOpen(X[i]) * DFOpen(X[i]) / (2 * (X[i + 1] - X[i - 1])) * F[Id - 1][i - 1] +
+	//	tau * FOpen(X[i]) * FOpen(X[i]) / ((X[i + 1] - X[i - 1]) * (X[i + 1] - X[i])) * F[Id - 1][i + 1] -
+	//	tau * FOpen(X[i]) * FOpen(X[i]) / ((X[i + 1] - X[i - 1]) * (X[i + 1] - X[i])) * F[Id - 1][i] -
+	//	tau * FOpen(X[i]) * FOpen(X[i]) / ((X[i + 1] - X[i - 1]) * (X[i] - X[i - 1])) * F[Id - 1][i] +
+	//	tau * FOpen(X[i]) * FOpen(X[i]) / ((X[i + 1] - X[i - 1]) * (X[i] - X[i - 1])) * F[Id - 1][i - 1];
 
-		CReal[i - 1] = 2;
-		CImagin[i - 1] = dt * U(X[i]) - BImagin[i - 1] - AImagin[i - 1];
-
-		DReal[i - 1] =
-			4 * FReal[Id - 1][i] -
-			(AReal[i - 1] * FReal[Id - 1][i - 1] - AImagin[i - 1] * FImagin[Id - 1][i - 1]) -
-			(CReal[i - 1] * FReal[Id - 1][i] - CImagin[i - 1] * FImagin[Id - 1][i]) -
-			(BReal[i - 1] * FReal[Id - 1][i + 1] - BImagin[i - 1] * FImagin[Id - 1][i + 1]);
-		DImagin[i - 1] =
-			4 * FImagin[Id - 1][i] -
-			(AImagin[i - 1] * FReal[Id - 1][i - 1] - AReal[i - 1] * FImagin[Id - 1][i - 1]) -
-			(CImagin[i - 1] * FReal[Id - 1][i] - CReal[i - 1] * FImagin[Id - 1][i]) -
-			(BImagin[i - 1] * FReal[Id - 1][i + 1] - BReal[i - 1] * FImagin[Id - 1][i + 1]);
+	for (int i = 1; i < N - 1; i++) {
+		complex<double> tau = { 0, dt };
+		A[i - 1] = tau * FOpen(X[i]) * DFOpen(X[i]) / (2 * (X[i + 1] - X[i - 1])) - tau * FOpen(X[i]) * FOpen(X[i]) / ((X[i + 1] - X[i - 1]) * (X[i] - X[i - 1]));
+		B[i - 1] = -tau * FOpen(X[i]) * DFOpen(X[i]) / (2 * (X[i + 1] - X[i - 1])) - tau * FOpen(X[i]) * FOpen(X[i]) / ((X[i + 1] - X[i - 1]) * (X[i + 1] - X[i]));
+		C[i - 1] = 1. + tau * U(X[i]) / 2. + tau * FOpen(X[i]) * FOpen(X[i]) /  (X[i + 1] - X[i - 1]) * ( (1. / (X[i + 1] - X[i])) + (1. / (X[i] - X[i - 1])));
+		D[i - 1] = 
+			F[Id - 1][i] + 
+			tau * U(X[i]) / 2. * F[Id - 1][i] + 
+			tau * FOpen(X[i]) * DFOpen(X[i]) / (2 * (X[i + 1] - X[i - 1])) * F[Id - 1][i + 1] -
+			tau * FOpen(X[i]) * DFOpen(X[i]) / (2 * (X[i + 1] - X[i - 1])) * F[Id - 1][i - 1] +
+			tau * FOpen(X[i]) * FOpen(X[i]) / ((X[i + 1] - X[i - 1]) * (X[i + 1] - X[i])) * F[Id - 1][i + 1] - 
+			tau * FOpen(X[i]) * FOpen(X[i]) / ((X[i + 1] - X[i - 1]) * (X[i + 1] - X[i])) * F[Id - 1][i] - 
+			tau * FOpen(X[i]) * FOpen(X[i]) / ((X[i + 1] - X[i - 1]) * (X[i] - X[i - 1])) * F[Id - 1][i] + 
+			tau * FOpen(X[i]) * FOpen(X[i]) / ((X[i + 1] - X[i - 1]) * (X[i] - X[i - 1])) * F[Id - 1][i - 1];
 	}
 }
 
@@ -118,39 +136,15 @@ void WaveModel::FindABCD() {
 void WaveModel::ForwardMethod() {
 
 	for (int i = 1; i < N - 1; i++) {
-		//buff
-		double
-			denominatorReal = CReal[i - 1] + AReal[i - 1] * alphaReal[i - 1] - AImagin[i - 1] * alphaImagin[i - 1],
-			denominatorImagin = CImagin[i - 1] + AImagin[i - 1] * alphaReal[i - 1] + AReal[i - 1] * alphaImagin[i - 1];
-		double
-			numeratorAlphaReal = BReal[i - 1],
-			numeratorAlphaImagin = BImagin[i - 1],
-			numeratorBettaReal = DReal[i - 1] - (AReal[i - 1] * bettaReal[i - 1] - AImagin[i - 1] * bettaImagin[i - 1]),
-			numeratorBettaImagin = DImagin[i - 1] - (AImagin[i - 1] * bettaReal[i - 1] + AReal[i - 1] * bettaImagin[i - 1]);
-
-		alphaReal[i] = -(
-			(numeratorAlphaReal * denominatorReal + numeratorAlphaImagin * denominatorImagin) /
-			(denominatorReal * denominatorReal + denominatorImagin * denominatorImagin));
-		alphaImagin[i] = -(
-			(denominatorReal * numeratorAlphaImagin - numeratorAlphaReal * denominatorImagin) /
-			(denominatorReal * denominatorReal + denominatorImagin * denominatorImagin));
-
-		bettaReal[i] = (
-			(numeratorBettaReal * denominatorReal + numeratorBettaImagin * denominatorImagin) /
-			(denominatorReal * denominatorReal + denominatorImagin * denominatorImagin));
-		bettaImagin[i] = (
-			(denominatorReal * numeratorBettaImagin - numeratorBettaReal * denominatorImagin) /
-			(denominatorReal * denominatorReal + denominatorImagin * denominatorImagin));
-
+		alpha[i] = -1. * (B[i - 1]) / (C[i - 1] + A[i - 1] * alpha[i - 1]);
+		betta[i] = (D[i - 1] - A[i - 1] * betta[i - 1]) / (C[i - 1] + A[i - 1] * alpha[i - 1]);		
 	}
 }
 
 //обратный ход прогонки
 void WaveModel::BackwardMethod() {
-	for (int i = N - 2; i > 0; i--) {
-		FReal[Id][i] = bettaReal[i] + alphaReal[i] * FReal[Id][i + 1] - alphaImagin[i] * FImagin[Id][i + 1];
-		FImagin[Id][i] = bettaImagin[i] + alphaImagin[i] * FReal[Id][i + 1] + alphaReal[i] * FImagin[Id][i + 1];
-	}
+	for (int i = N - 2; i > 0; i--) 
+		F[Id][i] = alpha[i] * F[Id][i + 1] + betta[i];
 }
 
 //апдейтит параметры модели
@@ -164,11 +158,15 @@ void WaveModel::Update(int N, double dt, double R, double a, double b, double U0
 	this->f0 = f0;
 	this->aSr = asr;
 	this->gamma = gamma;
+	this->SFId = N / 2;
 }
 
 //Быстрое Фурье
-bool  WaveModel::FFT(int Ft_Flag, double* Rdat, double* Idat)
+bool  WaveModel::FFT(int Ft_Flag,complex<double>* data)
 {
+	double* Rdat = NULL, * Idat = NULL;
+	ConvertComplex(data, &Rdat, &Idat);
+
 	int LogN = log2(IdMax);
 	int Nn = IdMax;
 
@@ -255,7 +253,11 @@ bool  WaveModel::FFT(int Ft_Flag, double* Rdat, double* Idat)
 		j = j + k;
 	}
 
-	if (Ft_Flag == FT_DIRECT) return true;
+	if (Ft_Flag == FT_DIRECT) {
+		ConvertDouble(&data, Rdat, Idat);
+		delete Rdat, delete Idat;
+		return true;
+	}
 
 	rw = 1.0F / Nn;
 
@@ -265,37 +267,99 @@ bool  WaveModel::FFT(int Ft_Flag, double* Rdat, double* Idat)
 		Idat[i] *= rw;
 	}
 
+	ConvertDouble(&data, Rdat, Idat);
+	delete Rdat, delete Idat;
 	return true;
 }
 
 //нахождение всех спектров
 void WaveModel::FindSpectrum() {
-	double* realBuf, * imaginBuf;
-
 	for (int i = 0; i < N; i++) {
-		realBuf = new double[IdMax];
-		imaginBuf = new double[IdMax];
-
-		cout << "Before " << endl;
-		for (int j = 0; j < IdMax; j++) {
-			realBuf[j] = FReal[j][i];
-			imaginBuf[j] = FImagin[j][i];
-			cout << "Real: " << realBuf[j] << "Imagin: " << imaginBuf[j] << endl;
-		}
-		cout << "After " << endl;
+		FFur[i] = new complex<double>[IdMax];
+		for (int j = 0; j < IdMax; j++)
+			FFur[i][j] = F[IdMax - j - 1][i];
 
 		//берем фурье
-		bool res = FFT(FT_DIRECT, realBuf, imaginBuf);
-		if (!res)
-			cout << "Фурье обосралось" << endl;
+		FFT(FT_DIRECT, FFur[i]);
 
-		for (int j = 0; j < IdMax; j++) {
-			cout << "Real: " << realBuf[j] << "Imagin: " << imaginBuf[j] << endl;
+		for (int j = 0; j < IdMax; j++)
+			cout << FFur[i][j] << endl;
+	}
+}
 
+//находит пики в спектрограмме
+void WaveModel::FindPicks() {
+	//находим маскимальный пик
+	int id;
+	double max;
+	FindMax(0, IdMax, max, id);
+	Energes.push_back({ max, id });
+
+	//находим остальные пики
+	double min = max * 0.05;
+	int ida = id;
+	int idb = IdMax;
+	bool res = true;
+	while (res) {
+		FindId(min, ida, idb);
+		res = FindMax(ida, idb, max, id, min);
+		
+		if (res) {
+			Energes.push_back({ max, id }); 
+			ida = id;
 		}
+	}
 
-		FFurReal[i] = realBuf;
-		FFurImagin[i] = imaginBuf;
+}
+
+//вторая версия поиска пиков
+void WaveModel::FindPicks2() {
+	int id;
+	double max;
+	FindMax(0, IdMax, max, id);
+
+	max *= 0.05;
+	for (int i = 1; i < 1024; i++) {
+		double left = abs(FFur[SFId][i - 1]);
+		double cent = abs(FFur[SFId][i]);
+		double right = abs(FFur[SFId][i + 1]);
+
+		if ((cent > left) && (cent > right) && (cent>=max)) {
+			Energes.push_back({ cent, i});
+		}
+	}
+}
+
+//находит максимальное значение, начиная с некоторого id
+void WaveModel::FindMax(int ida, int idb, double& max, int& id) {
+	max = abs(FFur[SFId][ida]);
+	for (int i = ida + 1; i < idb; i++) {
+		if (max < abs(FFur[SFId][i])) {
+			max = abs(FFur[SFId][i]);
+			id = i;
+		}
+	}
+}
+//находит максимальное значение, начиная с некоторого id
+bool WaveModel::FindMax(int ida, int idb, double& max, int& id, double min) {
+	max = abs(FFur[int(N / 2)][ida]);
+	bool res = false;
+	for (int i = ida + 1; i < idb; i++) {
+		if ((max < abs(FFur[int(N / 2)][i])) && (abs(FFur[int(N / 2)][i]) > min)) {
+			max = abs(FFur[int(N / 2)][i]);
+			id = i;
+			res = true;
+		}
+	}
+	return res;
+}
+//находит отрезок со следующим пиком
+void WaveModel::FindId(double min, int& ida, int idb) {
+	for (int i = ida; i < idb; i++) {
+		if (abs(FFur[int(N / 2)][i]) <= min) {
+			ida = i;
+			return;
+		}		
 	}
 }
 
@@ -303,4 +367,118 @@ void WaveModel::FindSpectrum() {
 void WaveModel::FindFunc() {
 	//находим спектр
 	FindSpectrum();
+	FindPicks2();
+}
+
+//Отдает указатель на F(id)
+complex<double>** WaveModel::GetF() {
+	return F;
+}
+
+//Отдает указатель на FFur(id)
+complex<double>** WaveModel::GetFFur() {
+	return FFur;
+}
+
+//отдает указатель на X
+double* WaveModel::GetX() {
+	return X;
+}
+
+//отдает указатель на f
+double* WaveModel::Getf() {
+	return f;
+}
+
+//сбрасывает настройки
+void WaveModel::Reset()
+{
+	if ((F != NULL)) {
+		delete [] X;
+		delete [] A;
+		delete [] B;
+		delete [] C;
+		delete [] D;
+		delete [] alpha;
+		delete [] betta;
+
+		for (int i = 0; i < IdMax; i++)
+			delete [] F[i];
+		for (int i = 0; i < N; i++)
+			delete [] FFur[i];
+
+		delete [] F;
+		delete [] FFur;
+		Id = 1;
+		Energes.clear();
+	}	
+}
+
+//конвертирует из complex в double
+void WaveModel::ConvertComplex(complex<double>* comp, double** RDat, double** IDat) {
+	*RDat = new double[IdMax];
+	*IDat = new double[IdMax];
+	for (int i = 0; i < IdMax; i++) {
+		(*RDat)[i] = comp[i].real();
+		(*IDat)[i] = comp[i].imag();
+	}
+}
+
+//конвертирует из double в complex
+void WaveModel::ConvertDouble(complex<double>** comp, double* RDat, double* IDat) {
+	for (int i = 0; i < IdMax; i++)
+		(*comp)[i] = complex<double>(RDat[i], IDat[i]);
+}
+
+//Отдает ссылку на вектор с энергиями
+vector<pair<double, int>> WaveModel::GetEnerges(){
+	return Energes;
+}
+
+//находит собственные функции в конкретном 
+void WaveModel::FindSF(int id) {
+	Energes.clear();
+	SFId = id;
+	FindPicks2();
+}
+
+//функция для открытых граничных условий
+complex<double> WaveModel::FOpen(double x) {
+	complex<double> g(0, 0);		//функция g
+	complex<double> res;
+
+	//если зашли за правую границу ямы
+	if (x >= b)
+		g = { 0, (x - b) * (x - b) };
+	//если зашли за левую границу ямы
+	else if (x < a)
+		g = { 0, (x + a) * (x + a) };
+
+	res = 1. / (1. + koef * g);
+
+	return res;
+}
+
+//производная от функции для открытых граничных условий
+complex<double> WaveModel::DFOpen(double x) {
+	complex<double> g(0,0);		//функция g
+	complex<double> res (0,0);
+	complex<double> numerator;
+
+	//если зашли за правую границу ямы
+	if (x >= b) {
+		numerator = { 0, 2 * koef * (x - b) };
+		g = { 0, (x - b) * (x - b) };
+		res = -numerator / ((1. + koef * g) * (1. + koef * g));
+	}
+		
+	//если зашли за левую границу ямы
+	else if (x < a) {
+		numerator = { 0, 2 * koef * (x + a) };
+		g = { 0, (x + a) * (x + a) };
+		res = -numerator / ((1. + koef * g) * (1. + koef * g));
+	}
+		
+	
+	return res;
 }

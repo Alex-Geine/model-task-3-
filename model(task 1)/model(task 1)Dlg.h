@@ -61,9 +61,15 @@ public:
 	double U0;		//высота ямы
 	double gamma;	//дисперсия ямы
 	double asr;		//среднее отклонение
+	int idDraw;		//переменная, отвечает за id отрисовки спектра 
+
+	int ID = 0;
+
 	CListBox listModels;
 	afx_msg void OnEnChangeEdit4();
 	
 	afx_msg void OnBnClickedButton5();
-	int idDraw;
+	
+	afx_msg void OnBnClickedButton6();
+	afx_msg void OnBnClickedButton7();
 };
