@@ -61,8 +61,7 @@ void Controller::FillList(){
 //запусткает вычисления
 void Controller::StartSolve() {
 	mod->FindWave();
-	mod->FindFunc();
-	MessageBoxW(NULL, L"DONE!", L"DONE!", NULL);	
+	mod->FindFunc();	
 }
 
 //запускает отрисовку главного графика
@@ -71,7 +70,7 @@ void Controller::DrawMainGr(LPDRAWITEMSTRUCT Item1) {
 	double ItemWidth = Item1->rcItem.right - Item1->rcItem.left,
 		ItemHeight = Item1->rcItem.bottom - Item1->rcItem.top;
 	//параметры графика в мировых кооринатах
-	double top = 2 * MaxF * (1 + 0.2);
+	double top =  MaxF * (1 + 0.2);
 	double bottom = 0;
 	double left = 0;
 	double right = 2 * R * (1 + 0.2);
@@ -80,7 +79,7 @@ void Controller::DrawMainGr(LPDRAWITEMSTRUCT Item1) {
 		steplenX = (right - left) / 10;
 
 	double xScale = ItemWidth / (right - left);
-	double yScale = -ItemHeight / (top - bottom);
+	double yScale = -ItemHeight / (top + top /10 - bottom);
 
 
 
@@ -93,15 +92,15 @@ void Controller::DrawMainGr(LPDRAWITEMSTRUCT Item1) {
 	//преобразование мира(переход к координатам самого графика
 	Matrix matr;
 	matr.Scale(xScale, (yScale + 1)); //маштабирование
-	matr.Translate(right / 2, -top / 2); //перенос начала координат
+	matr.Translate(right / 2, -top); //перенос начала координат
 
 
 	gr.SetTransform(&matr);
 
 
 	Pen BackGroundPen(Color::DarkGray, 0.005);
-	Pen pen(Color::BlueViolet, 0.006);
-	Pen pen2(Color::Green, 0.006);
+	Pen pen(Color::Black, 0.006);
+	Pen pen2(Color::Blue, 0.006);
 
 	Pen StickPen(Color::CornflowerBlue, 0.02);
 	SolidBrush brush(Color::Black);
@@ -113,10 +112,10 @@ void Controller::DrawMainGr(LPDRAWITEMSTRUCT Item1) {
 	for (int i = 0; i < 10; i++)
 	{
 		//горизонтальная
-		gr.DrawLine(&BackGroundPen, PointF(-right / 2, top / 2 - i * steplenY), PointF(right / 2, top / 2 - i * steplenY));
+		gr.DrawLine(&BackGroundPen, PointF(-right / 2, top  - i * steplenY), PointF(right / 2, top  - i * steplenY));
 
 		//вертикальная
-		gr.DrawLine(&BackGroundPen, PointF(-right / 2 + i * steplenX, top / 2), PointF(-right / 2 + i * steplenX, -top / 2));
+		gr.DrawLine(&BackGroundPen, PointF(-right / 2 + i * steplenX, top), PointF(-right / 2 + i * steplenX, bottom));
 	}
 
 	//Большие оси
@@ -124,11 +123,11 @@ void Controller::DrawMainGr(LPDRAWITEMSTRUCT Item1) {
 	gr.DrawLine(&pen, PointF(-right / 2, 0), PointF(right / 2, 0));
 
 	//вертикальная
-	gr.DrawLine(&pen, PointF(0, top / 2), PointF(0, -top / 2));
+	gr.DrawLine(&pen, PointF(0, top ), PointF(0, 0));
 
 	//границы ямы
-	gr.DrawLine(&pen2, PointF(a, top / 2), PointF(a, -top / 2));
-	gr.DrawLine(&pen2, PointF(b, top / 2), PointF(b, -top / 2));
+	gr.DrawLine(&pen2, PointF(R, top), PointF(R, 0));
+	gr.DrawLine(&pen2, PointF(-R, top), PointF(-R, 0));
 
 	gr.ResetTransform();
 
@@ -138,8 +137,8 @@ void Controller::DrawMainGr(LPDRAWITEMSTRUCT Item1) {
 		CString str;
 
 		//по Y
-		str.Format(L"%.2f", top / 2 - i * steplenY);
-		PointF strPoint(0, top / 2 - i * steplenY);
+		str.Format(L"%.2f", top - i * steplenY);
+		PointF strPoint(0, top - i * steplenY);
 		matr.TransformPoints(&strPoint);
 		gr.DrawString(str, str.GetLength() + 1, &font, strPoint, &brush);
 
@@ -172,22 +171,22 @@ void Controller::DrawMainGr(LPDRAWITEMSTRUCT Item1) {
 	grnew.DrawImage(&Image, 0, 0);
 }
 
-//запускает отрисовку графика с собственными функциями
+//запускает отрисовку графика с спектром
 void Controller::DrawPhase(LPDRAWITEMSTRUCT Item1) {
 	FindMaxFFur();
 	double ItemWidth = Item1->rcItem.right - Item1->rcItem.left,
 		ItemHeight = Item1->rcItem.bottom - Item1->rcItem.top;
 	//параметры графика в мировых кооринатах
-	double top = 2 * MaxFFur * (1 + 0.2);
+	double top = MaxFFur * (1 + 0.2);
 	double bottom = 0;
 	double left = 0;
-	double right = 2 * (1 + 0.2) / dt;
+	double right =  1 / dt;
 
 	double steplenY = (top - bottom) / 10,
 		steplenX = (right - left) / 10;
 
-	double xScale = ItemWidth / (right - left);
-	double yScale = -ItemHeight / (top - bottom);
+	double xScale = ItemWidth / (right + right/20 - left);
+	double yScale = -ItemHeight / (top  + top / 10- bottom);
 
 
 
@@ -200,14 +199,14 @@ void Controller::DrawPhase(LPDRAWITEMSTRUCT Item1) {
 	//преобразование мира(переход к координатам самого графика
 	Matrix matr;
 	matr.Scale(xScale, (yScale + 1)); //маштабирование
-	matr.Translate(right / 2, -top / 2); //перенос начала координат
+	matr.Translate(right/20, -top); //перенос начала координат
 
 
 	gr.SetTransform(&matr);
 
 
 	Pen BackGroundPen(Color::DarkGray, 0.005);
-	Pen pen(Color::BlueViolet, 0.006);
+	Pen pen(Color::Black, 0.006);
 
 	Pen StickPen(Color::CornflowerBlue, 0.02);
 	SolidBrush brush(Color::Black);
@@ -219,18 +218,18 @@ void Controller::DrawPhase(LPDRAWITEMSTRUCT Item1) {
 	for (int i = 0; i < 10; i++)
 	{
 		//горизонтальная
-		gr.DrawLine(&BackGroundPen, PointF(-right / 2, top / 2 - i * steplenY), PointF(right / 2, top / 2 - i * steplenY));
+		gr.DrawLine(&BackGroundPen, PointF(0, top  - i * steplenY), PointF(right, top - i * steplenY));
 
 		//вертикальная
-		gr.DrawLine(&BackGroundPen, PointF(-right / 2 + i * steplenX, top / 2), PointF(-right / 2 + i * steplenX, -top / 2));
+		gr.DrawLine(&BackGroundPen, PointF(i * steplenX, top), PointF( i * steplenX, 0));
 	}
 
 	//Большие оси
 	//горизонтальная
-	gr.DrawLine(&pen, PointF(-right / 2, 0), PointF(right / 2, 0));
+	gr.DrawLine(&pen, PointF(0, 0), PointF(right, 0));
 
 	//вертикальная
-	gr.DrawLine(&pen, PointF(0, top / 2), PointF(0, -top / 2));
+	gr.DrawLine(&pen, PointF(0, top), PointF(0, 0));
 
 	gr.ResetTransform();
 
@@ -238,16 +237,19 @@ void Controller::DrawPhase(LPDRAWITEMSTRUCT Item1) {
 	for (int i = 0; i < 11; i++)
 	{
 		CString str;
-
-		//по Y
-		str.Format(L"%.2f", top / 2 - i * steplenY);
-		PointF strPoint(0, top / 2 - i * steplenY);
-		matr.TransformPoints(&strPoint);
-		gr.DrawString(str, str.GetLength() + 1, &font, strPoint, &brush);
+		PointF strPoint;
+		if (i != 10) {
+			//по Y
+			str.Format(L"%.2f", top - i * steplenY);
+			strPoint.X = -right / 25;
+			strPoint.Y =  top - i * steplenY;
+			matr.TransformPoints(&strPoint);
+			gr.DrawString(str, str.GetLength() + 1, &font, strPoint, &brush);
+		}		
 
 		//по X
-		str.Format(L"%.2f", right / 2 - i * steplenX);
-		strPoint.X = right / 2 - i * steplenX;
+		str.Format(L"%.2f", right - i * steplenX);
+		strPoint.X = right - i * steplenX;
 		strPoint.Y = 0;
 		matr.TransformPoints(&strPoint);
 		gr.DrawString(str, str.GetLength() + 1, &font, strPoint, &brush);
@@ -280,7 +282,7 @@ void Controller::DrawPhaseTr(LPDRAWITEMSTRUCT Item1) {
 	double ItemWidth = Item1->rcItem.right - Item1->rcItem.left,
 		ItemHeight = Item1->rcItem.bottom - Item1->rcItem.top;
 	//параметры графика в мировых кооринатах
-	double top = 2 * MaxE * (1 + 0.2);
+	double top =  MaxE * (1 + 0.2);
 	double bottom = 0;
 	double left = 0;
 	double right = 2 * R * (1 + 0.2);
@@ -289,7 +291,7 @@ void Controller::DrawPhaseTr(LPDRAWITEMSTRUCT Item1) {
 		steplenX = (right - left) / 10;
 
 	double xScale = ItemWidth / (right - left);
-	double yScale = -ItemHeight / (top - bottom);
+	double yScale = -ItemHeight / (top + top / 10 - bottom);
 
 
 
@@ -302,14 +304,15 @@ void Controller::DrawPhaseTr(LPDRAWITEMSTRUCT Item1) {
 	//преобразование мира(переход к координатам самого графика
 	Matrix matr;
 	matr.Scale(xScale, (yScale + 1)); //маштабирование
-	matr.Translate(right / 2, -top / 2); //перенос начала координат
+	matr.Translate(right / 2, -top); //перенос начала координат
 
 
 	gr.SetTransform(&matr);
 
 
 	Pen BackGroundPen(Color::DarkGray, 0.005);
-	Pen pen(Color::BlueViolet, 0.006);
+	Pen pen(Color::Black, 0.006);
+	Pen pen2(Color::Blue, 0.006);
 
 	Pen StickPen(Color::CornflowerBlue, 0.02);
 	SolidBrush brush(Color::Black);
@@ -321,10 +324,10 @@ void Controller::DrawPhaseTr(LPDRAWITEMSTRUCT Item1) {
 	for (int i = 0; i < 10; i++)
 	{
 		//горизонтальная
-		gr.DrawLine(&BackGroundPen, PointF(-right / 2, top / 2 - i * steplenY), PointF(right / 2, top / 2 - i * steplenY));
+		gr.DrawLine(&BackGroundPen, PointF(-right / 2, top - i * steplenY), PointF(right / 2, top - i * steplenY));
 
 		//вертикальная
-		gr.DrawLine(&BackGroundPen, PointF(-right / 2 + i * steplenX, top / 2), PointF(-right / 2 + i * steplenX, -top / 2));
+		gr.DrawLine(&BackGroundPen, PointF(-right / 2 + i * steplenX, top), PointF(-right / 2 + i * steplenX, bottom));
 	}
 
 	//Большие оси
@@ -332,7 +335,11 @@ void Controller::DrawPhaseTr(LPDRAWITEMSTRUCT Item1) {
 	gr.DrawLine(&pen, PointF(-right / 2, 0), PointF(right / 2, 0));
 
 	//вертикальная
-	gr.DrawLine(&pen, PointF(0, top / 2), PointF(0, -top / 2));
+	gr.DrawLine(&pen, PointF(0, top), PointF(0, 0));
+
+	//границы ямы
+	gr.DrawLine(&pen2, PointF(R, top), PointF(R, 0));
+	gr.DrawLine(&pen2, PointF(-R, top), PointF(-R, 0));
 
 	gr.ResetTransform();
 
@@ -342,8 +349,8 @@ void Controller::DrawPhaseTr(LPDRAWITEMSTRUCT Item1) {
 		CString str;
 
 		//по Y
-		str.Format(L"%.2f", top / 2 - i * steplenY);
-		PointF strPoint(0, top / 2 - i * steplenY);
+		str.Format(L"%.2f", top - i * steplenY);
+		PointF strPoint(0, top - i * steplenY);
 		matr.TransformPoints(&strPoint);
 		gr.DrawString(str, str.GetLength() + 1, &font, strPoint, &brush);
 
@@ -391,22 +398,18 @@ void Controller::Clear() {
 void Controller::UpdateModel(
 	int n,			//количество точек по оси X
 	double dt,		//шаг по времени
-	double a,		//левая графница ямы
-	double b,		//правая граница ямы
+	
 	double R,		//граница ямы
 	double f0,		//амплитуда купола
-	double U0,		//высота ямы
+	
 	double gamma,	//дисперсия ямы
 	double asr		//среднее отклонение
 	) 
 {
-	mod->Update(n, dt, R, a, b, U0, f0, asr, gamma);
-
+	mod->Update(n, dt, R,  f0, asr, gamma);
 	this->R = R;
 	this->N = n;
 	this->dt = dt;
-	this->a = a;
-	this->b = b;
 }
 
 //находит минимальное/максимальное значения функции

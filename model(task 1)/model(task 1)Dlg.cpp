@@ -46,6 +46,7 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
 	ON_WM_PAINT()
+
 END_MESSAGE_MAP()
 
 
@@ -57,15 +58,12 @@ Cmodeltask1Dlg::Cmodeltask1Dlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_MODELTASK_1_DIALOG, pParent)
 
 	, n(100)
-	, dt(0.004)
-	, a(-1)
-	, b(1)
+	, dt(0.02)	
 	, R(2)
 	, f0(0.01)
-	, U0(0.1)
 	, gamma(0.1)
 	, asr(0)
-	, idDraw(12)
+	, idDraw()
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -77,32 +75,27 @@ void Cmodeltask1Dlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_MAINGRAPH, MainGraph);
 
 	DDX_Text(pDX, IDC_EDIT1, n);
-	DDX_Text(pDX, IDC_EDIT2, dt);
-	DDX_Text(pDX, IDC_EDIT3, a);
-	DDX_Text(pDX, IDC_EDIT4, b);
+	DDX_Text(pDX, IDC_EDIT2, dt);	
 	DDX_Text(pDX, IDC_EDIT5, R);
-	DDX_Text(pDX, IDC_EDIT6, U0);
 	DDX_Text(pDX, IDC_EDIT7, f0);
 	DDX_Text(pDX, IDC_EDIT8, gamma);
 	DDX_Control(pDX, IDC_LIST2, listModels);
 	DDX_Text(pDX, IDC_EDIT9, asr);
 	DDX_Text(pDX, IDC_EDIT10, idDraw);
+	DDX_Control(pDX, IDC_MAINGRAPH3, Functions);
+	DDX_Control(pDX, IDC_MAINGRAPH2, Spectr);
 }
 
 BEGIN_MESSAGE_MAP(Cmodeltask1Dlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
-	ON_WM_TIMER()
-
-	ON_BN_CLICKED(IDC_BUTTON1, &Cmodeltask1Dlg::OnBnClickedButton1)
-	ON_BN_CLICKED(IDC_BUTTON2, &Cmodeltask1Dlg::OnBnClickedButton2)
-	ON_BN_CLICKED(IDC_BUTTON3, &Cmodeltask1Dlg::OnBnClickedButton3)
+	ON_WM_TIMER()	
 	ON_BN_CLICKED(IDC_BUTTON4, &Cmodeltask1Dlg::OnBnClickedButton4)	
 	ON_EN_CHANGE(IDC_EDIT4, &Cmodeltask1Dlg::OnEnChangeEdit4)
 	ON_BN_CLICKED(IDC_BUTTON5, &Cmodeltask1Dlg::OnBnClickedButton5)
-	ON_BN_CLICKED(IDC_BUTTON6, &Cmodeltask1Dlg::OnBnClickedButton6)
-	ON_BN_CLICKED(IDC_BUTTON7, &Cmodeltask1Dlg::OnBnClickedButton7)
+	ON_LBN_SELCHANGE(IDC_LIST2, &Cmodeltask1Dlg::OnLbnSelchangeList2)
+	ON_EN_CHANGE(IDC_EDIT10, &Cmodeltask1Dlg::OnEnChangeEdit10)
 END_MESSAGE_MAP()
 
 
@@ -144,17 +137,12 @@ BOOL Cmodeltask1Dlg::OnInitDialog()
 
 	CWnd* m_Parent;
 	m_Parent = GetDesktopWindow();
+	
+	Functions.drawerID = 3;
+	Functions.control = control;
 
-	phd = new Phase_D(m_Parent);	
-	phd->Create(IDD_DIALOG1, m_Parent);
-	phd->Phase_Gr.GetContr(control);
-	phd->Phase_Gr.drawerID = 2;
-
-	por = new Portret(m_Parent);
-	por->Create(IDD_DIALOG2, m_Parent);
-	por->PhasePor.GetContr(control);
-	por->PhasePor.drawerID = 3;
-
+	Spectr.drawerID = 2;
+	Spectr.control = control;
 	
 
 	control->listEnerges = &listModels;
@@ -221,6 +209,7 @@ void Cmodeltask1Dlg::OnEnChangeEdit2()
 void Cmodeltask1Dlg::OnTimer(UINT_PTR nIDEvent)
 {
 	if (ID < 1024) {	
+
 		control->drawId = ID;
 		MainGraph.draw = 1;
 		MainGraph.Invalidate(false);
@@ -239,59 +228,19 @@ void Cmodeltask1Dlg::OnTimer(UINT_PTR nIDEvent)
 	CDialogEx::OnTimer(nIDEvent);
 }
 
-//фазовая траектория
-void Cmodeltask1Dlg::OnBnClickedButton1()
-{	
-	phd->ShowWindow(1);
-}
-
-
 void CAboutDlg::OnPaint()
 {
 	CPaintDC dc(this); // device context for painting
-}
-
-//фазовый портрет
-void Cmodeltask1Dlg::OnBnClickedButton2()
-{
-	por->ShowWindow(1);	
-}
-
-//маятники
-void Cmodeltask1Dlg::OnBnClickedButton3()
-{
-	if (!control->DataReady()) {
-		MessageBox(L"Нет данных!", L"Ошибка!", NULL);
-		return;
-	}
-	control->ShowItemList();
-	por->GetMes();
 }
 
 //Посчитать значения
 void Cmodeltask1Dlg::OnBnClickedButton4()
 {
 	UpdateData();
-
-	//проверки на корректность значений
-	if ((abs(a) > R) || (abs(b) > R)) {
-		MessageBox(L"границы ямы больше чем R", L"Ошибка!", NULL);
-		return;
-	}
-	else if (a >= b) {
-		MessageBox(L"Левая граница ямы больше, чем правая!", L"Ошибка!", NULL);
-		return;
-	}
-	
+	KillTimer(timer);
 	control->Clear();
-	control->UpdateModel(n, dt, a, b, R, f0, U0, gamma, asr);
-
-	
-
+	control->UpdateModel(n, dt,  R, f0, gamma, asr);
 	control->StartSolve();
-
-	
-
 	control->GetData();
 }
 
@@ -308,29 +257,35 @@ void Cmodeltask1Dlg::OnBnClickedButton5()
 	}
 	ID = 0;
 	timer = SetTimer(1, 10, 0);
-
-	/*for (int i = 0; i < 1024; i++) {
-		control->drawId = i;		
-		MainGraph.draw = 1;
-		MainGraph.Invalidate(false);
-
-		while (PeekMessage(&msg, 0, WM_PAINT, WM_PAINT, PM_REMOVE))
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
-	}*/
-	
 }
 
-//нарисовать спектр
-void Cmodeltask1Dlg::OnBnClickedButton6()
+//собственные функции
+void Cmodeltask1Dlg::OnLbnSelchangeList2()
 {
 	if (!control->DataReady()) {
 		MessageBox(L"Нет данных!", L"Ошибка!", NULL);
 		return;
 	}
-	
+	control->ShowItemList();
+
+	Functions.draw = 1;
+	Functions.Invalidate(false);
+
+	while (PeekMessage(&msg, 0, WM_PAINT, WM_PAINT, PM_REMOVE))
+	{
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
+}
+
+//спектр
+void Cmodeltask1Dlg::OnEnChangeEdit10()
+{
+	if (!control->DataReady()) {
+		MessageBox(L"Нет данных!", L"Ошибка!", NULL);
+		return;
+	}
+
 	UpdateData();
 
 	if ((idDraw < 0) || (idDraw >= n)) {
@@ -339,12 +294,15 @@ void Cmodeltask1Dlg::OnBnClickedButton6()
 	}
 
 	control->drawIdF = idDraw;
-	phd->GetMes();
-}
+	Spectr.draw = 1;
+	Spectr.Invalidate(false);
 
-//пересчитать собственные функции
-void Cmodeltask1Dlg::OnBnClickedButton7()
-{
-	UpdateData();
+
+	while (PeekMessage(&msg, 0, WM_PAINT, WM_PAINT, PM_REMOVE))
+	{
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
+	
 	control->GetSF(idDraw);
 }
