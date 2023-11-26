@@ -5,8 +5,7 @@
 #pragma once
 #include "Drawer.h"
 #include "Controller.h"
-#include "Phase_D.h"
-#include "Portret.h"
+
 
 
 
@@ -42,23 +41,17 @@ public:
 	MSG msg;
 	Controller* control;
 
-	Phase_D* phd;
-	Portret* por;	
+	
 
 	afx_msg void OnEnChangeEdit2();	
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
-	afx_msg void OnBnClickedButton1();
-	afx_msg void OnBnClickedButton2();
-	afx_msg void OnBnClickedButton3();
+
 	afx_msg void OnBnClickedButton4();
 
 	int n;			//количество точек по оси X
 	double dt;		//шаг по времени
-	double a;		//левая графница ямы
-	double b;		//правая граница ямы
 	double R;		//граница ямы
 	double f0;		//амплитуда купола
-	double U0;		//высота ямы
 	double gamma;	//дисперсия ямы
 	double asr;		//среднее отклонение
 	int idDraw;		//переменная, отвечает за id отрисовки спектра 
@@ -69,7 +62,8 @@ public:
 	afx_msg void OnEnChangeEdit4();
 	
 	afx_msg void OnBnClickedButton5();
-	
-	afx_msg void OnBnClickedButton6();
-	afx_msg void OnBnClickedButton7();
+	Drawer Functions;
+	Drawer Spectr;
+	afx_msg void OnLbnSelchangeList2();
+	afx_msg void OnEnChangeEdit10();
 };

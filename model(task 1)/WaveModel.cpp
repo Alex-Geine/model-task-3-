@@ -82,10 +82,7 @@ double WaveModel::F0(double x) {
 
 //функция потенциальной энергии
 double WaveModel::U(double x) {
-	if ((x <= b) && (x >= a))
-		return 0;
-	else
-		return U0;
+	return 0;	
 }
 
 //нахождение производной от функции F
@@ -120,13 +117,10 @@ void WaveModel::BackwardMethod() {
 }
 
 //апдейтит параметры модели
-void WaveModel::Update(int N, double dt, double R, double a, double b, double U0, double f0, double asr, double gamma) {
+void WaveModel::Update(int N, double dt, double R,  double f0, double asr, double gamma) {
 	this->N = N;
 	this->dt = dt;
-	this->R = R;
-	this->a = a;
-	this->b = b;
-	this->U0 = U0;
+	this->R = R;	
 	this->f0 = f0;
 	this->aSr = asr;
 	this->gamma = gamma;
